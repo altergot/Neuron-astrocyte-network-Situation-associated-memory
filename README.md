@@ -28,6 +28,7 @@ To run the default experiment execute `src/main.m`
 #### SNN pre-training:
 
 *SNN: spiking neural network*
+
 Default experiment consists of pre-training for 20 binary images of letters and numbers.
 We pre-trained synaptic connections only in the spiking neuronal network consists of pyramidal neurons and interneurons without taking into account the influence of astrocytes. 
 During pre-training each of patterns was presented to the neuronal network 10 times in random order.
@@ -35,6 +36,7 @@ During pre-training each of patterns was presented to the neuronal network 10 ti
 #### Situation-associated learning in SNAN:
 
 *SNAN: spiking neuron-astrocyte network*
+
 After the SNN pre-training, we turn on the bidirectional interaction between pyramidal neurons layer and astrocytic layer.
 To let the astrocytic network to generate the first calcium pattern we apply to SNAN the initial pool of patterns which consists of randomly selected 7 patterns from the general data set used in the SNN pre-training.
 After some break(approximately 650 ms) necessary for the formation of calcium  impulses  in  pattern-associated  astrocytes,  we start ongoing training-testing process of the SNAN in real time. 
