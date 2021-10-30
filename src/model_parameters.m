@@ -14,6 +14,7 @@ params.n_pre_training = fix(params.t_end_pre_training / params.step);
 params.n_test = fix(params.t_end_test_cycle / params.step) + 1;
 
 %% Experiment
+params.threshold_pic = 127;
 params.t_start_stim = 0.02;
 params.training_impulse_duration = 0.002;
 params.training_impulse_T = 0.005;
@@ -63,6 +64,7 @@ params.c = -65;
 params.d = 2;
 params.alf = 50;
 params.k = 600;
+params.is_active = 25;
 params.neuron_fired_thr = 30;
 params.G_thr = 0.2;
 
@@ -88,10 +90,14 @@ params.Esyn = 0;
 params.Esyn_ = -90;
 params.ksyn = 0.2;
 
-params.lambda_EE = 15;
-params.lambda_IE = 2;
+params.lambda_EE = 15; % average exponential distribution
+params.lambda_IE = 2; 
 params.lambda_EI = 80;
 params.beta = 200;
+
+params.step_is_active = 0.5;
+params.is_active_threshold = 0.3;
+params.max_is_active = 1;
 
 %% Astrosyte model
 params.dCa = 0.05;
@@ -107,8 +113,12 @@ impact_astro = 0.02; % t(sec)
 params.impact_astro = fix(impact_astro / params.step);
 params.window_astro_watch = fix(window_astro_watch / params.step);
 params.shift_window_astro_watch = fix(shift_window_astro_watch / params.step);
-t_comp_memory = 0.03;
+
+%% Memory
+t_comp_memory = 0.03; % t(sec)
 params.t_comp_memory = fix(t_comp_memory / params.step);
+params.threshold_freq = 2;
+params.threshold_freq_pic = 3;
 
 params_p = params;
 end

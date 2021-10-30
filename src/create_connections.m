@@ -1,15 +1,51 @@
-function [Pre_EE, Post_EE, Pre_EI, Post_EI, Pre_IE, Post_IE] ...
-    = create_connections()
+function [Pre, Post_line] = create_connections(syn_connection_type)
+%% syn_connection_type
+% 1 - EE
+% 2 - EI
+% 3 - IE
+
+%% parameters
 params = model_parameters();
+if syn_connection_type == 1
+    Post = zeros(params.mneuro_E, params.nneuro_E, params.N_connections_EE, 'int32');
+    Post_for_one = zeros(params.mneuro_E, params.nneuro_E, 'int32');
+    ties_stock = 1000 * params.N_connections_EE;
+    i_max = params.mneuro_E;
+    j_max = params.mneuro_E;
+    lambda = params.lambda_EE;
+    x_max = params.mneuro_E;
+    y_max = params.nneuro_E;
+    A = round(params.mneuro_E/params.mneuro_E , 0);
+    n_max = params.N_connections_EE;
+elseif syn_connection_type == 2
+    Post = zeros(params.mneuro_I, params.nneuro_I, params.N_connections_EI, 'int32');
+    Post_for_one = zeros(params.mneuro_E, params.nneuro_E, 'int32');
+    ties_stock = 100 * params.N_connections_EI;
+    i_max = params.mneuro_I;
+    j_max = params.mneuro_I;
+    lambda = params.lambda_EI;
+    x_max = params.mneuro_E;
+    y_max = params.nneuro_E;
+    A = round(params.mneuro_E/params.mneuro_I , 0);
+    n_max = params.N_connections_EI;
+else
+    Post = zeros(params.mneuro_E, params.nneuro_E, params.N_connections_IE, 'int32');
+    Post_for_one = zeros(params.mneuro_I, params.nneuro_I, 'int32');
+    ties_stock = 100 * params.N_connections_IE;
+    i_max = params.mneuro_E;
+    j_max = params.mneuro_E;
+    lambda = params.lambda_IE;
+    x_max = params.mneuro_I;
+    y_max = params.nneuro_I;
+    A = round(params.mneuro_I/params.mneuro_E , 1);
+    n_max = params.N_connections_IE;
+end
 
-%% Zone EE
-Zone_syn_relation = zeros(params.mneuro_E, params.nneuro_E, params.N_connections_EE);
-Zone_syn_relation_for_one = zeros(params.mneuro_E, params.nneuro_E);
-ties_stock = 1000 * params.N_connections_EE;
-for i = 1 : params.mneuro_E
-    for j = 1 : params.nneuro_E
+%% Indices of presynaptic and postsynaptic neurons
+for i = 1 : i_max
+    for j = 1 : j_max
         XY = zeros(2, ties_stock, 'int8');
-        R = random('exp', params.lambda_EE, 1, ties_stock);
+        R = random('exp', lambda, 1, ties_stock);
         fi = 2 * pi * rand(1, ties_stock);
         XY(1,:) = fix(R .* cos(fi));
         XY(2,:) = fix(R .* sin(fi));
@@ -17,113 +53,29 @@ for i = 1 : params.mneuro_E
         XY = XY1';
         n1 = 1;
         for k = 1 : ties_stock
-            x = i + XY(1, k);
-            y = j + XY(2, k);
+            x = A * i + XY(1, k);
+            y = A * j + XY(2, k);
             if (i == x && j == y)
-                pp = 1;
-            else pp = 0;
+                p = 1;
+            else p = 0;
             end
-            if (x > 0 && y > 0 && x <= params.mneuro_E && y <= params.nneuro_E && pp == 0)
-                Zone_syn_relation(i, j, n1) = sub2ind(size(Zone_syn_relation_for_one), x, y);
+            if (x > 0 && y > 0 && x <= x_max && y <= y_max && p == 0)
+                Post(i, j, n1) = sub2ind(size(Post_for_one), x, y);
                 n1 = n1 + 1;
             end
-            if n1 > params.N_connections_EE
+            if n1 > n_max
                 break
             end
         end
     end
 end
-Zone_syn_relation2 = permute(Zone_syn_relation, [3 1 2]);
-Post_EE = Zone_syn_relation2(:)';
+Post = permute(Post, [3 1 2]);
+Post_line = Post(:)';
 k = 1;
-for i = 1 : params.N_connections_EE : size(Post_EE, 2)
-    Pre_EE(i : i + params.N_connections_EE - 1) = k;
+for i = 1 : n_max : size(Post_line, 2)
+    Pre(i : i + n_max - 1) = k;
     k = k + 1;
 end
-Post_EE = int32(Post_EE);
-Pre_EE = int32(Pre_EE);
-
-%% Zone IE
-Zone_syn_relation = zeros(params.mneuro_E, params.nneuro_E, params.N_connections_IE);
-Zone_syn_relation_for_one = zeros(params.mneuro_I, params.nneuro_I);
-ties_stock = 100 * params.N_connections_IE;
-for i = 1 : params.mneuro_E
-    for j = 1 : params.nneuro_E
-        XY = zeros(2, ties_stock, 'int8');
-        R = random('exp', params.lambda_IE, 1, ties_stock);
-        fi = 2 * pi * rand(1, ties_stock);
-        XY(1,:) = fix(R .* cos(fi));
-        XY(2,:) = fix(R .* sin(fi));
-        XY1 = unique(XY', 'row','stable');
-        XY = XY1';
-        n1 = 1;
-        for k = 1 : ties_stock
-            x = fix(i / 2) + XY(1, k);
-            y = fix(j / 2) + XY(2, k);
-            if (fix(i / 2) == x && fix(j / 2) == y)
-                pp = 1;
-            else pp = 0;
-            end
-            if (x > 0 && y > 0 && x <= params.mneuro_I && y <= params.nneuro_I && pp == 0)
-                Zone_syn_relation(i, j, n1) = sub2ind(size(Zone_syn_relation_for_one), x, y);
-                n1 = n1 + 1;
-            end
-            
-            if n1 > params.N_connections_IE
-                break
-            end
-        end
-    end
-end
-Zone_syn_relation2 = permute(Zone_syn_relation, [3 1 2]);
-Post_IE = Zone_syn_relation2(:)';
-k = 1;
-for i = 1 : params.N_connections_IE : size(Post_IE, 2)
-    Pre_IE(i : i + params.N_connections_IE - 1) = k;
-    k = k + 1;
-end
-Post_IE = int32(Post_IE);
-Pre_IE = int32(Pre_IE);
-
-%% Zone EI
-Zone_syn_relation = zeros(params.mneuro_I, params.nneuro_I, params.N_connections_EI);
-Zone_syn_relation_for_one = zeros(params.mneuro_E, params.nneuro_E);
-ties_stock = 100 * params.N_connections_EI;
-for i = 1 : params.mneuro_I
-    for j = 1 : params.nneuro_I
-        XY = zeros(2, ties_stock, 'int8');
-        R = random('exp', params.lambda_EI, 1, ties_stock);
-        fi = 2 * pi * rand(1, ties_stock);
-        XY(1,:) = fix(R .* cos(fi));
-        XY(2,:) = fix(R .* sin(fi));
-        XY1 = unique(XY', 'row','stable');
-        XY = XY1';
-        n1 = 1;
-        for k = 1 : ties_stock
-            x = fix(2 * i) + XY(1, k);
-            y = fix(2 * j) + XY(2, k);
-            if (fix(2 * i) == x && fix(2 * j) == y)
-                pp = 1;
-            else pp = 0;
-            end
-            if (x > 0 && y > 0 && x <= params.mneuro_E && y <= params.nneuro_E && pp == 0)
-                Zone_syn_relation(i, j, n1) = sub2ind(size(Zone_syn_relation_for_one), x, y);
-                n1 = n1 + 1;
-            end
-            
-            if n1 > params.N_connections_EI
-                break
-            end
-        end
-    end
-end
-Zone_syn_relation2 = permute(Zone_syn_relation, [3 1 2]);
-Post_EI = Zone_syn_relation2(:)';
-k = 1;
-for i = 1 : params.N_connections_EI : size(Post_EI, 2)
-    Pre_EI(i : i + params.N_connections_EI - 1) = k;
-    k = k + 1;
-end
-Post_EI = int32(Post_EI);
-Pre_EI = int32(Pre_EI);
+Post_line = int32(Post_line);
+Pre = int32(Pre);
 end

@@ -23,15 +23,18 @@ git clone https://github.com/altergot/Neuron-astrocyte-network-Situation-associa
 
 ### Running the experiment
 
-To run the default experiment execute `main.m`
+To run the default experiment execute `src/main.m`
 
 #### SNN pre-training:
 
+*SNN: spiking neural network*
 Default experiment consists of pre-training for 20 binary images of letters and numbers.
 We pre-trained synaptic connections only in the spiking neuronal network consists of pyramidal neurons and interneurons without taking into account the influence of astrocytes. 
 During pre-training each of patterns was presented to the neuronal network 10 times in random order.
 
 #### Situation-associated learning in SNAN:
+
+*SNAN: spiking neuron-astrocyte network*
 After the SNN pre-training, we turn on the bidirectional interaction between pyramidal neurons layer and astrocytic layer.
 To let the astrocytic network to generate the first calcium pattern we apply to SNAN the initial pool of patterns which consists of randomly selected 7 patterns from the general data set used in the SNN pre-training.
 After some break(approximately 650 ms) necessary for the formation of calcium  impulses  in  pattern-associated  astrocytes,  we start ongoing training-testing process of the SNAN in real time. 
@@ -44,6 +47,8 @@ This procedure can be performed indefinitely, allowing the system to work with a
 The simulation model time is 1.1 seconds in the SNN pre-training and 7.3 seconds in Situation-associated learning in SNAN. The time step is 0.0001 seconds.
 The program run time for default parameters is around 3 hours.
 
+![response](/results/Training_Testing_Protocol.png "Training and Testing Protocol")
+
 ### Results
 
 The following results are presented at the end of the simulation:
@@ -53,7 +58,8 @@ The following results are presented at the end of the simulation:
 ![response](/results/Test.png "Test")
 
 2. The average correlation of recalled pattern with ideal item
-Average correlation = 0.9077
+
+Average correlation = 0.9224
 
 ### Parameters
 
@@ -61,7 +67,6 @@ File model_parameters.m consists of multiple parameter sections described in the
 - Timeline
 - Experiment
 - Applied pattern current
-- Movie
 - Poisson noise
 - Runge-Kutta steps
 - Network size
@@ -84,7 +89,7 @@ File model_parameters.m consists of multiple parameter sections described in the
 
 ## Cite
 
-Situation-associated memory in neuromorphic model of spiking neuron-astrocytenetwork
+Situation-associated memory in neuromorphic model of spiking neuron-astrocyte network
 Susanna Gordleeva, Yuliya A. Tsybina, Mikhail I. Krivonosov, Ivan Y. Tyukin, Victor B. Kazantsev, Alexey A. Zaikin, Alexander N. Gorban
 
 ## License

@@ -1,9 +1,7 @@
-function [Ca, h, IP3, Iastro_neuron, array_I_neuro] = step_astrocytes(neurons_activity, spike, ...
-    array_I_neuro, i, Ca, h, IP3, Iastro_neuron)
+function [Ca, h, IP3, Iastro_neuron, array_I_neuro] = step_astrocytes ...
+    (neurons_activity, spike, array_I_neuro, i, Ca, h, IP3, Iastro_neuron)
 params = model_parameters();
 
-diffusion_Ca = zeros(params.mastro, params.mastro, 'double');
-diffusion_IP3 = zeros(params.mastro, params.mastro, 'double');
 for j = 1 : params.mastro
     for k = 1 : params.nastro
         if neurons_activity(j, k) >= params.min_neurons_activity
@@ -12,33 +10,23 @@ for j = 1 : params.mastro
         end
         
         %% Compute calcium and IP3 diffusion betweeb neighbors
-        if (j == 1) && (k == 1)
-            diffusion_Ca = Ca(j + 1, k) + Ca(j,k + 1) - 2 * Ca(j,k);
-            diffusion_IP3 = IP3(j + 1, k) + IP3(j,k + 1) - 2 * IP3(j,k);
-        elseif (j == params.mastro) && (k == params.nastro)
-            diffusion_Ca = Ca(j - 1, k) + Ca(j,k - 1) - 2 * Ca(j,k);
-            diffusion_IP3 = IP3(j - 1, k) + IP3(j,k - 1) - 2 * IP3(j,k);
-        elseif (j == 1) && (k == params.nastro)
-            diffusion_Ca = Ca(j + 1, k) + Ca(j,k - 1) - 2 * Ca(j,k);
-            diffusion_IP3 = IP3(j + 1, k) + IP3(j,k - 1) - 2 * IP3(j,k);
-        elseif (j == params.mastro) && (k == 1)
-            diffusion_Ca = Ca(j - 1, k) + Ca(j,k + 1) - 2 * Ca(j,k);
-            diffusion_IP3 = IP3(j - 1, k) + IP3(j,k + 1) - 2 * IP3(j,k);
-        elseif j == 1
-            diffusion_Ca = Ca(j + 1, k) + Ca(j, k - 1) + Ca(j,k + 1) - 3 * Ca(j,k);
-            diffusion_IP3 = IP3(j + 1, k) + IP3(j, k - 1) + IP3(j,k + 1) - 3 * IP3(j,k);
-        elseif j == params.mastro
-            diffusion_Ca = Ca(j - 1, k) + Ca(j, k - 1) + Ca(j,k + 1) - 3 * Ca(j,k);
-            diffusion_IP3 = IP3(j - 1, k) + IP3(j, k - 1) + IP3(j,k + 1) - 3 * IP3(j,k);
-        elseif k == 1
-            diffusion_Ca = Ca(j - 1, k) + Ca(j + 1, k) + Ca(j,k + 1) - 3 * Ca(j,k);
-            diffusion_IP3 = IP3(j - 1, k) + IP3(j + 1, k) + IP3(j,k + 1) - 3 * IP3(j,k);
-        elseif k == params.nastro
-            diffusion_Ca = Ca(j - 1, k) + Ca(j + 1, k) + Ca(j,k - 1) - 3 * Ca(j,k);
-            diffusion_IP3 = IP3(j - 1, k) + IP3(j + 1, k) + IP3(j,k - 1) - 3 * IP3(j,k);
-        elseif (j > 1) && (j < params.mastro) && (k > 1) && (k < params.nastro)
-            diffusion_Ca = Ca(j - 1, k) + Ca(j + 1, k) + Ca(j, k - 1) + Ca(j,k + 1) - 4 * Ca(j,k);
-            diffusion_IP3 = IP3(j - 1, k) + IP3(j + 1, k) + IP3(j, k - 1) + IP3(j,k + 1) - 4 * IP3(j,k);
+        diffusion_Ca = 0;
+        diffusion_IP3 = 0;
+        if (j-1) > 0
+            diffusion_Ca = diffusion_Ca + Ca(j - 1, k)  -  Ca(j,k);
+            diffusion_IP3 = diffusion_IP3 + IP3(j - 1, k) - IP3(j,k);
+        end
+        if (j+1) < params.mastro
+            diffusion_Ca = diffusion_Ca + Ca(j + 1, k)  -  Ca(j,k);
+            diffusion_IP3 = diffusion_IP3 + IP3(j + 1, k) - IP3(j,k);
+        end
+        if (k-1) > 0
+            diffusion_Ca = diffusion_Ca + Ca(j, k - 1)  -  Ca(j,k);
+            diffusion_IP3 = diffusion_IP3 + IP3(j, k - 1) - IP3(j,k);
+        end
+        if (k+1) < params.mastro
+            diffusion_Ca = diffusion_Ca + Ca(j, k + 1)  -  Ca(j,k);
+            diffusion_IP3 = diffusion_IP3 + IP3(j, k + 1) - IP3(j,k);
         end
         
         %% Astrocyte model
@@ -55,14 +43,13 @@ for j = 1 : params.mastro
         IP3(j, k) = X(3);
         
         %% Astrocyte event occurs and impact on connected neurons
-        bnh = rem(i, params.shift_window_astro_watch);
-        if (Ca(j, k) > params.threshold_Ca) && (bnh == 0)
-            Fin = any(spike(j, k, (i - params.window_astro_watch) : i) >= params.enter_astro);
-            if Fin > 0
+        watch_activity = rem(i, params.shift_window_astro_watch);
+        if (Ca(j, k) > params.threshold_Ca) && (watch_activity == 0)
+            is_active = any(spike(j, k, (i - params.window_astro_watch) : i) >= params.enter_astro);
+            if is_active > 0
                 Iastro_neuron(j, k, i : i + params.impact_astro) = 1;
             end
         end
     end
 end
-
 end

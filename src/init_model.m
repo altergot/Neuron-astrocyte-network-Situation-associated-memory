@@ -8,7 +8,7 @@ else
 end
 model.T = single(model.T);
 
-%% Zone
+%% Synaptic connections
 if is_pre_training
     model_connections.Pre_EE  = zeros(1, params.quantity_connections_EE, 'int8');
     model_connections.Post_EE = zeros(1, params.quantity_connections_EE, 'int8');
@@ -21,7 +21,7 @@ if is_pre_training
     model_connections.W_EE(:,1) = params.W_EE_0;
     model_connections.W_EI(:,1) = params.W_EI_0;
 end
-model.is_active = zeros(params.quantity_neurons_E, 1);
+model.is_active = zeros(params.quantity_neurons_E, 1, 'double');
 %% Neurons
 model.V_line_E = zeros(params.quantity_neurons_E, 1, 'double');
 if ~is_pre_training
@@ -58,22 +58,17 @@ if ~is_pre_training
 end
 
 %% Iapp
-if is_pre_training
-    [model.T_Iapp] = create_pre_training_stim_times();
-else
-    model.T_Iapp = create_test_cycle_stim_times();
-end
+[model.T_Iapp, model.T_Iapp_test] = stimulation_times(is_pre_training);
 
 %% Prepare model
+[model.Iapp, model.T_Iapp_met, model.Im, model.Im_noise] = ...
+    make_Iapp(model.T_Iapp, is_pre_training);
 if is_pre_training
-    [model.Iapp, model.T_Iapp_met] = make_Iapp_training(model.T_Iapp);
-    [model_connections.Pre_EE, model_connections.Post_EE, ...
-        model_connections.Pre_EI, model_connections.Post_EI, ...
-        model_connections.Pre_IE, model_connections.Post_IE] = ...
-        create_connections();
-else
-    [model.Iapp, model.T_Iapp_met, model.Im, model.Im_noise] = ...
-        make_Iapp_test(model.T_Iapp);
+    [model_connections.Pre_EE, model_connections.Post_EE] = ...
+        create_connections(1);
+    [model_connections.Pre_EI, model_connections.Post_EI] = ...
+        create_connections(2);
+    [model_connections.Pre_IE, model_connections.Post_IE] = ...
+        create_connections(3);
 end
-
 end
